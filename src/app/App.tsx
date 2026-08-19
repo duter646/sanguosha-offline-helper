@@ -74,6 +74,7 @@ function LegacyApp() {
 
 export function App() {
   const [page, setPage] = useState<Page>('home')
+  const [selectedHero, setSelectedHero] = useState<Hero | null>(null)
   const [query, setQuery] = useState('')
   const [drawHeroId, setDrawHeroId] = useState('official-804')
   const [trigger, setTrigger] = useState<SkillTrigger>('play-phase')
