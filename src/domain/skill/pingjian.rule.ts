@@ -10,7 +10,16 @@ function sample<T>(items: T[], count: number): T[] {
  * 候选池由线下对局配置提供，不在规则中硬编码。
  */
 export function drawPingjian(context: PingjianContext): DrawResult {
-  const available = context.pool.filter((candidate) => !context.usedSkillNames.includes(candidate.skillName))
+  const available = context.pool.filter((candidate) => {
+    if (context.usedSkillNames.includes(candidate.skillName)) return false
+    if (candidate.triggers?.includes(context.trigger)) return true
+    const opening = candidate.description.split(/[，。；：]/, 1)[0] ?? candidate.description
+    if (/^(其他角色|任意角色|一名其他角色|当其他角色)/.test(opening)) return false
+    if (/^(锁定技|限定技|觉醒技|主公技)/.test(opening)) return false
+    if (context.trigger === 'play-phase') return /^出牌阶段/.test(opening)
+    if (context.trigger === 'end-phase') return /^(结束阶段|回合结束时|结束时)/.test(opening)
+    return /^(当你受到伤害后|你受到伤害后|受到伤害后|当你受伤后)/.test(opening)
+  })
   const candidates = sample(available, Math.min(3, available.length))
   return { candidates, remainingCount: Math.max(0, available.length - candidates.length) }
 }

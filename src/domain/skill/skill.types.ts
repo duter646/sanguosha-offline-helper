@@ -5,6 +5,7 @@ export type SkillCandidate = {
   heroName: string
   skillName: string
   description: string
+  triggers?: SkillTrigger[]
 }
 
 export type PingjianContext = {

@@ -6,8 +6,16 @@ import type { SkillCandidate, SkillTrigger } from '../domain/skill/skill.types'
 import type { SkillPool } from '../domain/pool/pool.types'
 import { loadActivePoolId, loadPools, saveActivePoolId, savePools } from '../stores/pool.storage'
 
-const toolNames = ['\u8bb8\u90b5', '\u5f20\u88d5', '\u795e\u534e\u4f57', '\u5173\u5b81', '\u7ba1\u5b81', '\u8d75\u8944', '\u5168\u60e0\u89e3', '\u5357\u534e\u8001\u4ed9', '\u82b1\u5e9e']
-const candidate = (hero: Hero, skill: typeof skills[number]): SkillCandidate => ({ heroId: hero.id, heroName: hero.name, skillName: skill.name, description: skill.description })
+const toolNames = ['\u8bb8\u52ad', '\u5f20\u88d5', '\u795e\u534e\u4f57', '\u5173\u5b81', '\u7ba1\u5b81', '\u8d75\u8944', '\u5168\u60e0\u89e3', '\u5357\u534e\u8001\u4ed9']
+const XUSHAO = '\u8bb8\u52ad'
+const ZHANGYU = '\u5f20\u88d5'
+const SHEN_HUATUO = '\u795e\u534e\u4f57'
+const GUANNING = '\u5173\u5b81'
+const GUAN_NING = '\u7ba1\u5b81'
+const ZHAO_XIANG = '\u8d75\u8944'
+const QUAN_HUIJIE = '\u5168\u60e0\u89e3'
+const femaleNames = new Set(['\u8d1e\u59ec', '\u8c82\u8749', '\u5927\u4e54', '\u5c0f\u4e54', '\u5b59\u5c1a\u9999', '\u9ec4\u6708\u82f1', '\u7518\u592b\u4eba', '\u7504\u59ec', '\u90ed\u5973\u738b', '\u5f20\u6625\u534e', '\u5f90\u6c0f', '\u9093\u827e', '\u738b\u5f02', '\u9a6c\u4e91\u7984', '\u82b1\u9b18', '\u8d75\u8944', '\u5168\u60e0\u89e3', '\u90b9\u6c0f', '\u6b65\u7ec3\u5e08', '\u5b59\u9c81\u73ed', '\u5b59\u9c81\u80b2', '\u5b59\u9c81\u73b2', '\u4f0a\u7c4d', '\u5b89\u6613'])
+const candidate = (hero: Hero, skill: typeof skills[number]): SkillCandidate => ({ heroId: hero.id, heroName: hero.name, skillName: skill.name, description: skill.description, triggers: skill.triggers })
 
 function HeroCard({ hero, onOpen }: { hero: Hero; onOpen: () => void }) { const skill = skills.find((item) => hero.skillIds.includes(item.id)); return <article className="hero-card" onClick={onOpen}><div className="hero-card__top"><span className="hero-faction">{hero.faction}</span><span>{hero.hp}体力</span></div><h3>{hero.name}</h3><div className="skill-name">{skill?.name}</div><p>{skill?.description}</p><span className="tag">{skill?.mechanismLabel}</span></article> }
 
@@ -17,9 +25,13 @@ export function App() {
   const [query, setQuery] = useState('')
   const [drawHeroId, setDrawHeroId] = useState('official-804')
   const [targetHeroId, setTargetHeroId] = useState('')
+  const [targetSearch, setTargetSearch] = useState('')
+  const [targetFaction, setTargetFaction] = useState('\u8700')
+  const [targetHp, setTargetHp] = useState('3')
   const [trigger, setTrigger] = useState<SkillTrigger>('play-phase')
   const [candidates, setCandidates] = useState<SkillCandidate[]>([])
   const [used, setUsed] = useState<string[]>([])
+  const [selectedThisDraw, setSelectedThisDraw] = useState(0)
   const [poolModalOpen, setPoolModalOpen] = useState(false)
   const [pools, setPools] = useState<SkillPool[]>(() => loadPools(heroes.map((hero) => hero.id)))
   const [activePoolId, setActivePoolId] = useState(() => loadActivePoolId())
@@ -37,15 +49,15 @@ export function App() {
 
   const draw = () => {
     if (!drawHero) return
+    setSelectedThisDraw(0)
     let result = pool.flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill)))
-    if (drawHero.name === '\u8bb8\u90b5') result = drawPingjian({ trigger, pool: result, usedSkillNames: used }).candidates
-    if (drawHero.name === '\u5f20\u88d5') result = result.filter((item) => { const hero = pool.find((itemHero) => itemHero.id === item.heroId); return hero?.faction === targetHero?.faction && hero?.hp === targetHero?.hp && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description) }).sort(() => Math.random() - .5).slice(0, 3)
-    if (drawHero.name === '\u795e\u534e\u4f57') result = targetHero ? pool.filter((hero) => hero.name === targetHero.name).flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill))) : []
-    if (drawHero.name === '\u5173\u5b81') result = targetHero ? skills.filter((skill) => targetHero.skillIds.includes(skill.id)).map((skill) => candidate(targetHero, skill)) : []
-    if (drawHero.name === '\u7ba1\u5b81') result = result.filter((item) => /[\u4ec1\u4e49\u793c\u667a\u4fe1]/.test(`${item.skillName}${item.description}`))
-    if (drawHero.name === '\u8d75\u8944') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u8700' && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description)).sort(() => Math.random() - .5).slice(0, 6)
-    if (drawHero.name === '\u5168\u60e0\u89e3') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u5434').sort(() => Math.random() - .5).slice(0, 4)
-    if (drawHero.name === '\u82b1\u9b58') result = []
+    if (drawHero.name === XUSHAO) result = drawPingjian({ trigger, pool: result, usedSkillNames: used }).candidates
+    if (drawHero.name === ZHANGYU) result = result.filter((item) => { const hero = pool.find((itemHero) => itemHero.id === item.heroId); return hero?.faction === targetFaction && hero?.hp === targetHp && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description) }).sort(() => Math.random() - .5).slice(0, 3)
+    if (drawHero.name === SHEN_HUATUO) result = targetHero ? pool.filter((hero) => hero.name === targetHero.name).flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill))) : []
+    if (drawHero.name === GUANNING) result = result.filter((item) => /^\u51fa\u724c\u9636\u6bb5/.test(item.description)).sort(() => Math.random() - .5).slice(0, 1)
+    if (drawHero.name === GUAN_NING) result = result.filter((item) => /[\u4ec1\u4e49\u793c\u667a\u4fe1]/.test(item.skillName)).sort(() => Math.random() - .5).slice(0, 1)
+    if (drawHero.name === ZHAO_XIANG) result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u8700' && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description)).sort(() => Math.random() - .5).slice(0, 6)
+    if (drawHero.name === QUAN_HUIJIE) result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u5434' && femaleNames.has(pool.find((hero) => hero.id === item.heroId)?.name ?? '')).sort(() => Math.random() - .5).slice(0, 4)
     setCandidates(result.filter((item) => !used.includes(item.skillName)))
   }
 
