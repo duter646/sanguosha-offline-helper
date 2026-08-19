@@ -9,12 +9,9 @@ export type Hero = {
   name: string
   faction: string
   hp: string
-  skillName: string
-  skillDescription: string
-  mechanism: SkillMechanism
-  mechanismLabel: string
+  skillIds: string[]
   officialUrl: string
-  note?: string
+  availability: 'physical' | 'online-original' | 'limited-online' | 'unclassified'
 }
 
 export type Page = 'home' | 'heroes' | 'draw'
