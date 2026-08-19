@@ -6,7 +6,7 @@ import type { SkillCandidate, SkillTrigger } from '../domain/skill/skill.types'
 import type { SkillPool } from '../domain/pool/pool.types'
 import { loadActivePoolId, loadPools, saveActivePoolId, savePools } from '../stores/pool.storage'
 
-const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙']
+const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '卞喜', '杨彪', '谋曹爽', '武关羽', '乐曹植']
 const XUSHAO = '许劭'
 const ZHANGYU = '张裕'
 const SHEN_HUATUO = '神华佗'
@@ -14,6 +14,17 @@ const GUANNING = '关宁'
 const GUAN_NING = '管宁'
 const ZHAO_XIANG = '赵襄'
 const QUAN_HUIJIE = '全惠解'
+const ZUOCI = '左慈'
+const SHEN_CAOPI = '神曹丕'
+const XURONG = '徐荣'
+const CAOHUA = '曹华'
+const LIJUE = '李傕'
+const BIANXI = '卞喜'
+const YANGBIAO = '杨彪'
+const MOU_CAO_SHUANG = '谋曹爽'
+const WU_GUAN_YU = '武关羽'
+const LE_CAO_ZHI = '乐曹植'
+const nonEquipmentNames = ['杀', '闪', '桃', '酒', '过河拆桥', '顺手牵羊', '无中生有', '无懈可击', '决斗', '南蛮入侵', '万箭齐发', '桃园结义', '五谷丰登', '借刀杀人', '乐不思蜀', '兵粮寸断', '火攻', '铁索连环', '火烧连营', '逐近弃远', '水淹七军']
 const femaleNames = new Set(['貂蝉', '大乔', '小乔', '孙尚香', '黄月英', '甘夫人', '甄姬', '郭女王', '张春华', '徐氏', '王异', '马云禄', '邹氏', '步练师', '孙鲁班', '孙鲁育', '安易', '花鬘', '赵襄', '全惠解'])
 
 const toCandidate = (hero: Hero, skill: typeof skills[number]): SkillCandidate => ({ heroId: hero.id, heroName: hero.name, skillName: skill.name, description: skill.description, triggers: skill.triggers })
@@ -113,6 +124,16 @@ export function App() {
     if (drawHero.name === GUAN_NING) result = result.filter((item) => /[仁义礼智信]/.test(item.skillName)).sort(() => Math.random() - .5).slice(0, 1)
     if (drawHero.name === ZHAO_XIANG) result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '蜀' && !/限定技|觉醒技|主公技/.test(item.description)).sort(() => Math.random() - .5).slice(0, 6)
     if (drawHero.name === QUAN_HUIJIE) result = result.filter((item) => { const hero = pool.find((candidate) => candidate.id === item.heroId); return hero?.faction === '吴' && femaleNames.has(hero.name) }).sort(() => Math.random() - .5).slice(0, 4)
+    if (drawHero.name === ZUOCI) result = pool.sort(() => Math.random() - .5).slice(0, 2).flatMap((hero) => { const own = skills.filter((skill) => hero.skillIds.includes(skill.id)); return own.length ? [makeCandidate(hero, own[Math.floor(Math.random() * own.length)])] : [] })
+    if (drawHero.name === SHEN_CAOPI) result = drawPingjian({ trigger, pool: result.filter((item) => item.heroName.startsWith('曹')), usedSkillNames }).candidates
+    if (drawHero.name === XURONG) { const options = ['受到1点火焰伤害且本回合不能对你使用杀', '失去1点体力且本回合手牌上限-1', '随机获得其两张牌']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '凶镬随机结果', description: options[Math.floor(Math.random() * options.length)] }] }
+    if (drawHero.name === CAOHUA) { const options = ['回复体力', '摸牌', '复原武将牌', '受到伤害', '弃牌', '翻面并横置']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '彩翼随机选项', description: options[Math.floor(Math.random() * options.length)] }] }
+    if (drawHero.name === LIJUE) result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '狼袭随机伤害', description: `本次造成${Math.floor(Math.random() * 3)}点伤害` }]
+    if (drawHero.name === BIANXI) { const target = pool[Math.floor(Math.random() * pool.length)]; result = target ? [{ heroId: target.id, heroName: target.name, skillName: '钝袭随机目标', description: '此角色成为随机目标' }] : [] }
+    if (drawHero.name === YANGBIAO) { const cards = ['过河拆桥', '杀', '五谷丰登']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '举讹随机牌', description: `本次随机使用：${cards[Math.floor(Math.random() * cards.length)]}` }] }
+    if (drawHero.name === MOU_CAO_SHUANG) { const options = ['令一名角色弃牌', '摸牌', '重铸牌', '弃牌']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '渐专随机删除', description: `随机删除：${options[Math.floor(Math.random() * options.length)]}` }] }
+    if (drawHero.name === WU_GUAN_YU) result = nonEquipmentNames.sort(() => Math.random() - .5).slice(0, 5).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机出现的非装备牌名' }))
+    if (drawHero.name === LE_CAO_ZHI) { const name = nonEquipmentNames[Math.floor(Math.random() * nonEquipmentNames.length)]; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '赋随机获得的非装备牌名' }] }
     setCandidates(result.filter((item) => !usedSkillNames.includes(item.skillName)))
   }
   const choose = (item: SkillCandidate) => {
