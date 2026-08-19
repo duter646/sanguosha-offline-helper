@@ -38,13 +38,14 @@ export function App() {
   const draw = () => {
     if (!drawHero) return
     let result = pool.flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill)))
-    if (drawHero.name === '许劭') result = drawPingjian({ trigger, pool: result, usedSkillNames: used }).candidates
-    if (drawHero.name === '张裕') result = result.filter((item) => { const hero = pool.find((itemHero) => itemHero.id === item.heroId); return hero?.faction === targetHero?.faction && hero?.hp === targetHero?.hp && !/限定技|觉醒技|主公技/.test(item.description) }).sort(() => Math.random() - .5).slice(0, 3)
-    if (drawHero.name === '神华佗') result = targetHero ? pool.filter((hero) => hero.name === targetHero.name).flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill))) : []
-    if (drawHero.name === '关宁' || drawHero.name === '花鬘') result = targetHero ? skills.filter((skill) => targetHero.skillIds.includes(skill.id)).map((skill) => candidate(targetHero, skill)) : []
-    if (drawHero.name === '管宁') result = result.filter((item) => /仁义礼智信/.test(item.description))
-    if (drawHero.name === '赵襄') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '蜀' && !/限定技|觉醒技|主公技/.test(item.description)).sort(() => Math.random() - .5).slice(0, 6)
-    if (drawHero.name === '全惠解') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '吴').sort(() => Math.random() - .5).slice(0, 4)
+    if (drawHero.name === '\u8bb8\u90b5') result = drawPingjian({ trigger, pool: result, usedSkillNames: used }).candidates
+    if (drawHero.name === '\u5f20\u88d5') result = result.filter((item) => { const hero = pool.find((itemHero) => itemHero.id === item.heroId); return hero?.faction === targetHero?.faction && hero?.hp === targetHero?.hp && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description) }).sort(() => Math.random() - .5).slice(0, 3)
+    if (drawHero.name === '\u795e\u534e\u4f57') result = targetHero ? pool.filter((hero) => hero.name === targetHero.name).flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => candidate(hero, skill))) : []
+    if (drawHero.name === '\u5173\u5b81') result = targetHero ? skills.filter((skill) => targetHero.skillIds.includes(skill.id)).map((skill) => candidate(targetHero, skill)) : []
+    if (drawHero.name === '\u7ba1\u5b81') result = result.filter((item) => /[\u4ec1\u4e49\u793c\u667a\u4fe1]/.test(`${item.skillName}${item.description}`))
+    if (drawHero.name === '\u8d75\u8944') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u8700' && !/\u9650\u5b9a\u6280|\u89c9\u9192\u6280|\u4e3b\u516c\u6280/.test(item.description)).sort(() => Math.random() - .5).slice(0, 6)
+    if (drawHero.name === '\u5168\u60e0\u89e3') result = result.filter((item) => pool.find((hero) => hero.id === item.heroId)?.faction === '\u5434').sort(() => Math.random() - .5).slice(0, 4)
+    if (drawHero.name === '\u82b1\u9b58') result = []
     setCandidates(result.filter((item) => !used.includes(item.skillName)))
   }
 

@@ -2,4 +2,9 @@ node_modules/
 dist/
 .vite/
 *.local
+*.tsbuildinfo
+
+# vite.config.ts 的构建产物（由 tsconfig.node.json 编译生成，不应入库）
+vite.config.js
+vite.config.d.ts
 
