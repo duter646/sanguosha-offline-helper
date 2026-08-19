@@ -41,5 +41,6 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
  .pool-modal__backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 28px; overflow-y: auto; background: rgba(47,35,26,.48); }
  .pool-modal__backdrop > .detail-card { width: min(760px, 94vw); max-height: calc(100vh - 56px); overflow-y: auto; }
  .pool-modal { width: min(980px, 94vw); max-height: 86vh; overflow: auto; padding: 24px; border: 1px solid #cdbfab; background: #f8f5ed; box-shadow: 0 24px 70px rgba(47,35,26,.25); }
- .pool-config__header small { display: block; margin-top: 7px; color: #8a7968; font-size: 12px; }
+.pool-config__header small { display: block; margin-top: 7px; color: #8a7968; font-size: 12px; }
+ .app-back-button { position: fixed; left: 18px; bottom: 18px; z-index: 20; padding: 10px 16px; border: 1px solid #a64435; border-radius: 4px; color: #fff8ee; background: #8d3229; box-shadow: 0 5px 18px rgba(47,35,26,.2); }
  @media (max-width: 760px) { .tool-home { grid-template-columns: 1fr; padding-top: 24px; } .tool-sidebar { position: static; } .tool-grid .hero-grid { grid-template-columns: 1fr 1fr; } }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { heroes, skills } from '../data/catalog'
 import type { Hero, Page } from '../domain/hero/hero.types'
 import { drawPingjian } from '../domain/skill/pingjian.rule'
@@ -6,7 +6,7 @@ import type { SkillCandidate, SkillTrigger } from '../domain/skill/skill.types'
 import type { SkillPool } from '../domain/pool/pool.types'
 import { loadActivePoolId, loadPools, saveActivePoolId, savePools } from '../stores/pool.storage'
 
-const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '卞喜', '杨彪', '谋曹爽', '武关羽', '乐曹植']
+const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '杨彪', '谋曹爽', '武关羽', '乐曹植']
 const XUSHAO = '许劭'
 const ZHANGYU = '张裕'
 const SHEN_HUATUO = '神华佗'
@@ -19,7 +19,6 @@ const SHEN_CAOPI = '神曹丕'
 const XURONG = '徐荣'
 const CAOHUA = '曹华'
 const LIJUE = '李傕'
-const BIANXI = '卞喜'
 const YANGBIAO = '杨彪'
 const MOU_CAO_SHUANG = '谋曹爽'
 const WU_GUAN_YU = '武关羽'
@@ -85,6 +84,7 @@ function LegacyApp() {
 
 export function App() {
   const [page, setPage] = useState<Page>('home')
+  const skipHistory = useRef(false)
   const [selectedHero, setSelectedHero] = useState<Hero | null>(null)
   const [query, setQuery] = useState('')
   const [drawHeroId, setDrawHeroId] = useState('official-804')
@@ -95,6 +95,7 @@ export function App() {
   const [targetHeroId, setTargetHeroId] = useState('')
   const [candidates, setCandidates] = useState<SkillCandidate[]>([])
   const [usedSkillNames, setUsedSkillNames] = useState<string[]>([])
+  const [mouCaoShuangDeleted, setMouCaoShuangDeleted] = useState<string[]>([])
   const [poolModalOpen, setPoolModalOpen] = useState(false)
   const [pools, setPools] = useState<SkillPool[]>(() => loadPools(heroes.map((hero) => hero.id)))
   const [activePoolId, setActivePoolId] = useState(() => loadActivePoolId())
@@ -109,6 +110,30 @@ export function App() {
   const targetOptions = pool.filter((hero) => hero.name.includes(targetSearch.trim()))
   const toolHeroes = heroes.filter((hero) => names.includes(hero.name))
   const filteredHeroes = useMemo(() => heroes.filter((hero) => `${hero.name}${skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name + skill.description).join('')}`.includes(query.trim())), [query])
+  useEffect(() => {
+    if (skipHistory.current) { skipHistory.current = false; return }
+    window.history.pushState({ appPage: page }, '', `#${page}`)
+  }, [page])
+  useEffect(() => {
+    const onPopState = () => {
+      const next = window.location.hash.slice(1) as Page
+      skipHistory.current = true
+      setPage(next === 'heroes' || next === 'draw' ? next : 'home')
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+  const goBack = () => { if (page === 'home') return; if (window.history.length > 1) window.history.back(); else setPage('home') }
+  useEffect(() => {
+    if (page === 'home') return
+    const button = document.createElement('button')
+    button.className = 'app-back-button'
+    button.textContent = '← 返回'
+    button.onclick = goBack
+    document.body.appendChild(button)
+    return () => button.remove()
+  }, [page])
+  useEffect(() => { if (drawHero?.name !== MOU_CAO_SHUANG) setMouCaoShuangDeleted([]) }, [drawHeroId])
 
   const updatePools = (next: SkillPool[]) => { setPools(next); savePools(next) }
   const updatePoolHeroes = (ids: string[]) => updatePools(pools.map((poolItem) => poolItem.id === activePool?.id ? { ...poolItem, heroIds: ids } : poolItem))
@@ -129,9 +154,8 @@ export function App() {
     if (drawHero.name === XURONG) { const options = ['受到1点火焰伤害且本回合不能对你使用杀', '失去1点体力且本回合手牌上限-1', '随机获得其两张牌']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '凶镬随机结果', description: options[Math.floor(Math.random() * options.length)] }] }
     if (drawHero.name === CAOHUA) { const options = ['回复体力', '摸牌', '复原武将牌', '受到伤害', '弃牌', '翻面并横置']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '彩翼随机选项', description: options[Math.floor(Math.random() * options.length)] }] }
     if (drawHero.name === LIJUE) result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '狼袭随机伤害', description: `本次造成${Math.floor(Math.random() * 3)}点伤害` }]
-    if (drawHero.name === BIANXI) { const target = pool[Math.floor(Math.random() * pool.length)]; result = target ? [{ heroId: target.id, heroName: target.name, skillName: '钝袭随机目标', description: '此角色成为随机目标' }] : [] }
     if (drawHero.name === YANGBIAO) { const cards = ['过河拆桥', '杀', '五谷丰登']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '举讹随机牌', description: `本次随机使用：${cards[Math.floor(Math.random() * cards.length)]}` }] }
-    if (drawHero.name === MOU_CAO_SHUANG) { const options = ['令一名角色弃牌', '摸牌', '重铸牌', '弃牌']; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '渐专随机删除', description: `随机删除：${options[Math.floor(Math.random() * options.length)]}` }] }
+    if (drawHero.name === MOU_CAO_SHUANG) { const options = ['令一名角色弃牌', '摸牌', '重铸牌', '弃牌']; const available = options.filter((option) => !mouCaoShuangDeleted.includes(option)); const picked = available[Math.floor(Math.random() * available.length)]; if (picked) { const remaining = available.filter((option) => option !== picked); setMouCaoShuangDeleted((current) => [...current, picked]); result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '渐专随机删除', description: `本次删除：${picked}；剩余选项：${remaining.join('、') || '无（四项已全部删除）'}` }] } else result = [] }
     if (drawHero.name === WU_GUAN_YU) result = nonEquipmentNames.sort(() => Math.random() - .5).slice(0, 5).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机出现的非装备牌名' }))
     if (drawHero.name === LE_CAO_ZHI) { const name = nonEquipmentNames[Math.floor(Math.random() * nonEquipmentNames.length)]; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '赋随机获得的非装备牌名' }] }
     setCandidates(result.filter((item) => !usedSkillNames.includes(item.skillName)))
