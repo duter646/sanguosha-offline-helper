@@ -14,7 +14,10 @@ function extractPage(html, id) {
   const nameMatch = html.match(/<p class="skin-hero"><span>([\s\S]*?)<\/span>([\s\S]*?)<\/p>/i)
   const name = decode(`${nameMatch?.[1] ?? ''}${nameMatch?.[2] ?? ''}`)
   if (!name) return null
-  const firstSkillBlock = html.match(/<div class="figure-skill on">([\s\S]*?)<\/div>\s*<div class="figure-skill /i)?.[1] ?? html.match(/<div class="figure-skill on">([\s\S]*?)<\/div>\s*<\/div>\s*<div class="life/i)?.[1] ?? ''
+  const skillStart = html.indexOf('<div class="figure-skill on">')
+  const nextSkillStart = skillStart >= 0 ? html.indexOf('<div class="figure-skill ', skillStart + 1) : -1
+  const skillEnd = skillStart >= 0 ? (nextSkillStart > skillStart ? nextSkillStart : html.indexOf('<div class="figure-text', skillStart)) : -1
+  const firstSkillBlock = skillStart >= 0 ? html.slice(skillStart, skillEnd > skillStart ? skillEnd : undefined) : ''
   const skillNames = [...firstSkillBlock.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((match) => decode(match[1])).filter(Boolean)
   const descriptions = [...firstSkillBlock.matchAll(/<div class="hero-skill">([\s\S]*?)<\/div>/gi)].map((match) => decode(match[1])).filter(Boolean)
   const skills = skillNames.map((skillName, index) => ({ name: skillName, description: descriptions[index] ?? '' }))

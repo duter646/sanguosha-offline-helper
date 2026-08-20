@@ -6,7 +6,7 @@ import type { SkillCandidate, SkillTrigger } from '../domain/skill/skill.types'
 import type { SkillPool } from '../domain/pool/pool.types'
 import { loadActivePoolId, loadPools, saveActivePoolId, savePools } from '../stores/pool.storage'
 
-const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '杨彪', '谋曹爽', '武关羽', '乐曹植']
+const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '杨彪', '谋曹爽', '武关羽', '乐曹植', '神典韦', '神张角', '赵嫣', '乐蔡邕']
 const XUSHAO = '许劭'
 const ZHANGYU = '张裕'
 const SHEN_HUATUO = '神华佗'
@@ -23,7 +23,11 @@ const YANGBIAO = '杨彪'
 const MOU_CAO_SHUANG = '谋曹爽'
 const WU_GUAN_YU = '武关羽'
 const LE_CAO_ZHI = '乐曹植'
-const nonEquipmentNames = ['杀', '闪', '桃', '酒', '过河拆桥', '顺手牵羊', '无中生有', '无懈可击', '决斗', '南蛮入侵', '万箭齐发', '桃园结义', '五谷丰登', '借刀杀人', '乐不思蜀', '兵粮寸断', '火攻', '铁索连环', '火烧连营', '逐近弃远', '水淹七军']
+const SHEN_DIANWEI = '神典韦'
+const SHEN_ZHANGJIAO = '神张角'
+const ZHAO_YAN = '赵嫣'
+const LE_CAIYONG = '乐蔡邕'
+const nonEquipmentNames = ['杀', '闪', '桃', '酒', '过河拆桥', '顺手牵羊', '无中生有', '无懈可击', '决斗', '南蛮入侵', '万箭齐发', '桃园结义', '五谷丰登', '借刀杀人', '乐不思蜀', '兵粮寸断', '火攻', '铁索连环']
 const femaleNames = new Set(['貂蝉', '大乔', '小乔', '孙尚香', '黄月英', '甘夫人', '甄姬', '郭女王', '张春华', '徐氏', '王异', '马云禄', '邹氏', '步练师', '孙鲁班', '孙鲁育', '安易', '花鬘', '赵襄', '全惠解'])
 
 const toCandidate = (hero: Hero, skill: typeof skills[number]): SkillCandidate => ({ heroId: hero.id, heroName: hero.name, skillName: skill.name, description: skill.description, triggers: skill.triggers })
@@ -96,6 +100,7 @@ export function App() {
   const [candidates, setCandidates] = useState<SkillCandidate[]>([])
   const [usedSkillNames, setUsedSkillNames] = useState<string[]>([])
   const [mouCaoShuangDeleted, setMouCaoShuangDeleted] = useState<string[]>([])
+  const [selectedGeneralIds, setSelectedGeneralIds] = useState<string[]>([])
   const [poolModalOpen, setPoolModalOpen] = useState(false)
   const [pools, setPools] = useState<SkillPool[]>(() => loadPools(heroes.map((hero) => hero.id)))
   const [activePoolId, setActivePoolId] = useState(() => loadActivePoolId())
@@ -141,6 +146,7 @@ export function App() {
   const makeCandidate = (hero: Hero, skill: typeof skills[number]): SkillCandidate => ({ heroId: hero.id, heroName: hero.name, skillName: skill.name, description: skill.description, triggers: skill.triggers })
   const draw = () => {
     if (!drawHero) return
+    setSelectedGeneralIds([])
     let result = pool.flatMap((hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => makeCandidate(hero, skill)))
     if (drawHero.name === XUSHAO) result = drawPingjian({ trigger, pool: result, usedSkillNames }).candidates
     if (drawHero.name === ZHANGYU) result = result.filter((item) => { const hero = pool.find((candidate) => candidate.id === item.heroId); return hero?.faction === targetFaction && hero?.hp === targetHp && !/限定技|觉醒技|主公技/.test(item.description) }).sort(() => Math.random() - .5).slice(0, 3)
@@ -158,10 +164,15 @@ export function App() {
     if (drawHero.name === MOU_CAO_SHUANG) { const options = ['令一名角色弃牌', '摸牌', '重铸牌', '弃牌']; const available = options.filter((option) => !mouCaoShuangDeleted.includes(option)); const picked = available[Math.floor(Math.random() * available.length)]; if (picked) { const remaining = available.filter((option) => option !== picked); setMouCaoShuangDeleted((current) => [...current, picked]); result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '渐专随机删除', description: `本次删除：${picked}；剩余选项：${remaining.join('、') || '无（四项已全部删除）'}` }] } else result = [] }
     if (drawHero.name === WU_GUAN_YU) result = nonEquipmentNames.sort(() => Math.random() - .5).slice(0, 5).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机出现的非装备牌名' }))
     if (drawHero.name === LE_CAO_ZHI) { const name = nonEquipmentNames[Math.floor(Math.random() * nonEquipmentNames.length)]; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '赋随机获得的非装备牌名' }] }
+    if (drawHero.name === SHEN_DIANWEI) result = pool.sort(() => Math.random() - .5).slice(0, 5).map((hero) => ({ heroId: hero.id, heroName: hero.name, skillName: '武将牌候选', description: `势力：${hero.faction}；体力：${hero.hp}；技能：${skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name).join('、') || '官网暂无技能'}` }))
+    if (drawHero.name === SHEN_ZHANGJIAO) { const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; const a = values[Math.floor(Math.random() * values.length)]; const b = values[Math.floor(Math.random() * values.length)]; const c = 36 - a - b; result = c >= 1 && c <= 13 ? [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '点数和36的随机牌组', description: `随机组合：${a}点、${b}点、${c}点` }] : [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '点数和36的随机牌组', description: '请重新抽取一组点数和为36的牌' }] }
+    if (drawHero.name === ZHAO_YAN) { const nonDamage = nonEquipmentNames.filter((name) => !['杀', '决斗', '南蛮入侵', '万箭齐发', '火攻'].includes(name)); result = nonDamage.sort(() => Math.random() - .5).slice(0, 3).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机亮出的非伤害牌名' })) }
+    if (drawHero.name === LE_CAIYONG) { const eligible = nonEquipmentNames.filter((name) => name.length === 2); result = eligible.sort(() => Math.random() - .5).slice(0, 2).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '符合当前字数条件的随机牌名' })) }
     setCandidates(result.filter((item) => !usedSkillNames.includes(item.skillName)))
   }
   const choose = (item: SkillCandidate) => {
     if (drawHero?.name === GUAN_NING) { setSeatSkills((current) => ({ ...current, [activeSeat]: [...(current[activeSeat] ?? []), item.skillName] })); setCandidates([]); return }
+    if (drawHero?.name === SHEN_DIANWEI) { const selected = selectedGeneralIds.includes(item.heroId); setSelectedGeneralIds((current) => selected ? current.filter((id) => id !== item.heroId) : [...current, item.heroId]); setCandidates((current) => current.map((candidate) => candidate.heroId === item.heroId ? { ...candidate, description: selected ? candidate.description.replace(/^已选择：/, '') : `已选择：${candidate.description}` } : candidate)); return }
     setUsedSkillNames((current) => [...current, item.skillName]); setCandidates((current) => current.filter((candidate) => candidate.skillName !== item.skillName))
   }
   const modal = poolModalOpen && <div className="pool-modal__backdrop" onClick={() => setPoolModalOpen(false)}><div className="pool-modal" onClick={(event) => event.stopPropagation()}><div className="pool-config__header"><strong>配置当前将池 · {poolHeroIds.length}/{heroes.length}</strong><span><button onClick={() => updatePoolHeroes(heroes.map((hero) => hero.id))}>全选</button><button onClick={() => updatePoolHeroes([])}>全不选</button><button onClick={() => setPoolModalOpen(false)}>关闭</button></span></div><div className="pool-list">{heroes.map((hero) => <label className="pool-item" key={hero.id}><input type="checkbox" checked={poolHeroIds.includes(hero.id)} onChange={() => updatePoolHeroes(poolHeroIds.includes(hero.id) ? poolHeroIds.filter((id) => id !== hero.id) : [...poolHeroIds, hero.id])} /><span>{hero.name}</span><small>{skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name).join('、')}</small></label>)}</div></div></div>
@@ -169,5 +180,5 @@ export function App() {
     {page === 'home' && <section className="tool-home"><aside className="tool-sidebar"><span className="eyebrow">OFFLINE TOOLKIT</span><h1>一将成名</h1><p>选择一名武将，开始对应的线下技能辅助。</p><button className="button button--primary" onClick={() => setPoolModalOpen(true)}>配置当前将池</button><button className="button button--ghost" onClick={() => setPage('heroes')}>查询全部武将</button><div className="sidebar-meta">当前将池：{activePool?.name}<br />已选武将：{poolHeroIds.length} / {heroes.length}</div></aside><div className="tool-grid"><div className="section-heading"><div><span className="eyebrow">EIGHT HERO TOOLS</span><h2>选择技能工具</h2></div></div><div className="hero-grid">{toolHeroes.map((hero) => <button className="tool-card" key={hero.id} onClick={() => { setDrawHeroId(hero.id); setPage('draw') }}><span className="hero-faction">{hero.faction}</span><strong>{hero.name}</strong><span>{skills.find((skill) => hero.skillIds.includes(skill.id))?.name}</span><small>进入工具 →</small></button>)}</div></div></section>}
     {page === 'heroes' && <section className="content-section"><div className="section-heading"><h2>武将查询</h2><span className="count">{filteredHeroes.length} / {heroes.length}</span></div><div className="filters"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索武将或技能" /></div><div className="hero-grid">{filteredHeroes.map((hero) => <HeroCard key={hero.id} hero={hero} onOpen={() => setPage('heroes')} />)}</div></section>}
     {page === 'draw' && <section className="content-section"><div className="section-heading"><h2>{drawHero?.name} · 技能工具</h2></div><div className="draw-panel"><div className="pool-switcher"><label>当前将池<select value={activePool?.id} onChange={(event) => selectPool(event.target.value)}>{pools.map((poolItem) => <option key={poolItem.id} value={poolItem.id}>{poolItem.name}</option>)}</select></label><button className="button button--ghost" onClick={() => setPoolModalOpen(true)}>配置将池 · {poolHeroIds.length}/{heroes.length}</button></div><div className="draw-controls">{drawHero?.name === XUSHAO && <label>发动时机<select value={trigger} onChange={(event) => setTrigger(event.target.value as SkillTrigger)}><option value="play-phase">出牌阶段</option><option value="end-phase">结束阶段</option><option value="damaged">受到伤害后</option></select></label>}{drawHero?.name === ZHANGYU && <><label>目标势力<select value={targetFaction} onChange={(event) => setTargetFaction(event.target.value)}><option>魏</option><option>蜀</option><option>吴</option><option>群</option><option>神</option></select></label><label>初始体力<select value={targetHp} onChange={(event) => setTargetHp(event.target.value)}><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label></>}{drawHero?.name === SHEN_HUATUO && <label>搜索目标武将<input value={targetSearch} onChange={(event) => setTargetSearch(event.target.value)} placeholder="输入名称缩小范围" /><select value={targetHeroId} onChange={(event) => setTargetHeroId(event.target.value)}><option value="">请选择</option>{targetOptions.map((hero) => <option key={hero.id} value={hero.id}>{hero.name} · {hero.faction}{hero.hp}</option>)}</select></label>}{drawHero?.name === GUAN_NING && <label>技能归属座位<select value={activeSeat} onChange={(event) => setActiveSeat(event.target.value)}>{seatNames.map((seat) => <option key={seat}>{seat}</option>)}</select></label>}<button className="button button--primary" onClick={draw}>随机出现候选</button></div>{drawHero?.name === GUAN_NING && <div className="draw-notice">管宁本次抽到的技能将交给所选座位。座位名称：{seatNames.map((seat, index) => <input key={seat} value={seat} onChange={(event) => setSeatNames((current) => current.map((name, i) => i === index ? event.target.value : name))} />)}</div>}{candidates.length > 0 && <div className="candidate-grid">{candidates.map((item) => <button className="candidate-card" key={`${item.heroId}-${item.skillName}`} onClick={() => choose(item)}><strong>{item.heroName}</strong><span>{item.skillName}</span><small>{item.description}</small></button>)}</div>}{drawHero?.name === GUAN_NING && <div className="used-skills">{seatNames.map((seat) => <span key={seat}><strong>{seat}</strong>：{(seatSkills[seat] ?? []).join('、') || '暂无技能'}</span>)}</div>}{drawHero?.name === XUSHAO && usedSkillNames.length > 0 && <div className="used-skills"><span>许劭本局已发动：</span>{usedSkillNames.map((name) => <span className="tag" key={name}>{name}</span>)}<button onClick={() => setUsedSkillNames([])}>重置本局</button></div>}</div></section>}
-  </main>{modal}<footer><span>数据来源：三国杀官方武将网站</span><span>八名抽取技能武将</span></footer></div>
+  </main>{modal}<footer><span>数据来源：三国杀官方武将网站</span></footer></div>
 }
