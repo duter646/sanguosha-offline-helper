@@ -46,6 +46,8 @@ const shenZhangJiaoCards = [
 ].flatMap(([point, ...names]) => names.map((name) => ({ point: point as number, name: name as string }))).concat({ point: 5, name: '木牛流马' })
 const ZHAO_YAN = '赵嫣'
 const LE_CAIYONG = '乐蔡邕'
+const TOOL_USAGE_STORAGE_KEY = 'sanguosha-tool-usage'
+const defaultToolOrder = [XUSHAO, GUANNING, GUAN_NING, MOU_CAO_SHUANG, LIJUE, ZHAO_YAN, ZHAO_XIANG]
 type CaoHuaMode = '阳' | '阴'
 const caoHuaOptions: Record<CaoHuaMode, string[]> = {
   阳: ['回复X点体力', '摸X张牌', '复原武将牌', '随机执行一个已移除的阳选项'],
@@ -127,6 +129,13 @@ export function App() {
   const [caoHuaMode, setCaoHuaMode] = useState<CaoHuaMode>('阳')
   const [caoHuaRemoved, setCaoHuaRemoved] = useState<Record<CaoHuaMode, string[]>>({ 阳: [], 阴: [] })
   const [caiYongLength, setCaiYongLength] = useState('2')
+  const [toolUsage, setToolUsage] = useState<Record<string, number>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(TOOL_USAGE_STORAGE_KEY) ?? '{}') as Record<string, number>
+    } catch {
+      return {}
+    }
+  })
   const [candidates, setCandidates] = useState<SkillCandidate[]>([])
   const [usedSkillNames, setUsedSkillNames] = useState<string[]>([])
   const [mouCaoShuangDeleted, setMouCaoShuangDeleted] = useState<string[]>([])
@@ -147,7 +156,14 @@ export function App() {
   const selectedShenDianweiGenerals = selectedGeneralIds.map((id) => pool.find((hero) => hero.id === id) ?? null)
   const selectedDianweiCount = selectedGeneralIds.filter(Boolean).length
   const caoShuangOptions = ['令一名角色弃牌', '摸牌', '重铸牌', '弃牌']
-  const toolHeroes = heroes.filter((hero) => names.includes(hero.name))
+  const toolHeroes = useMemo(() => heroes.filter((hero) => names.includes(hero.name)).sort((left, right) => {
+    const usageDifference = (toolUsage[right.id] ?? 0) - (toolUsage[left.id] ?? 0)
+    if (usageDifference !== 0) return usageDifference
+    const leftDefaultIndex = defaultToolOrder.indexOf(left.name)
+    const rightDefaultIndex = defaultToolOrder.indexOf(right.name)
+    if (leftDefaultIndex !== -1 || rightDefaultIndex !== -1) return (leftDefaultIndex === -1 ? 999 : leftDefaultIndex) - (rightDefaultIndex === -1 ? 999 : rightDefaultIndex)
+    return names.indexOf(left.name) - names.indexOf(right.name)
+  }), [toolUsage])
   const filteredHeroes = useMemo(() => heroes.filter((hero) => `${hero.name}${skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name + skill.description).join('')}`.includes(query.trim())), [query])
   const heroPageCount = Math.max(1, Math.ceil(filteredHeroes.length / HERO_PAGE_SIZE))
   const pagedHeroes = filteredHeroes.slice((heroPage - 1) * HERO_PAGE_SIZE, heroPage * HERO_PAGE_SIZE)
@@ -182,6 +198,11 @@ export function App() {
       ? current[caoHuaMode].filter((item) => item !== option)
       : [...current[caoHuaMode], option],
   }))
+  const recordToolUse = (heroId: string) => setToolUsage((current) => {
+    const next = { ...current, [heroId]: (current[heroId] ?? 0) + 1 }
+    localStorage.setItem(TOOL_USAGE_STORAGE_KEY, JSON.stringify(next))
+    return next
+  })
   useEffect(() => {
     if (skipHistory.current) { skipHistory.current = false; return }
     window.history.pushState({ appPage: page }, '', `#${page}`)
@@ -426,7 +447,7 @@ export function App() {
   }
   const modal = poolModalOpen && <div className="pool-modal__backdrop" onClick={() => setPoolModalOpen(false)}><div className="pool-modal" onClick={(event) => event.stopPropagation()}><div className="pool-config__header"><strong>配置当前将池 · {poolHeroIds.length}/{heroes.length}</strong><span><button onClick={() => updatePoolHeroes(heroes.map((hero) => hero.id))}>全选</button><button onClick={() => updatePoolHeroes([])}>全不选</button><button onClick={() => setPoolModalOpen(false)}>关闭</button></span></div><div className="pool-search"><input value={poolQuery} onChange={(event) => { setPoolPage(1); setPoolQuery(event.target.value) }} placeholder="搜索武将或技能" /></div><div className="pool-list">{pagedPoolHeroes.map((hero) => <label className="pool-item" key={hero.id}><input type="checkbox" checked={poolHeroIds.includes(hero.id)} onChange={() => updatePoolHeroes(poolHeroIds.includes(hero.id) ? poolHeroIds.filter((id) => id !== hero.id) : [...poolHeroIds, hero.id])} /><span>{hero.name}</span><small>{skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name).join('、')}</small></label>)}<div className="pagination"><button disabled={poolPage === 1} onClick={() => setPoolPage((current) => current - 1)}>Prev</button><span>{poolPage} / {poolPageCount}</span><button disabled={poolPage >= poolPageCount} onClick={() => setPoolPage((current) => current + 1)}>Next</button></div></div></div></div>
   return <div className="app-shell"><header className="topbar"><button className="brand" onClick={() => setPage('home')}><span>一将成名</span><small>线下辅助</small></button><nav><button onClick={() => setPage('home')}>工具首页</button><button onClick={() => setPage('heroes')}>武将查询</button><button onClick={() => setPoolModalOpen(true)}>配置将池</button></nav></header><main>
-    {page === 'home' && <section className="tool-home"><aside className="tool-sidebar"><span className="eyebrow">OFFLINE TOOLKIT</span><h1>一将成名</h1><p>选择一名武将，开始对应的线下技能辅助。</p><button className="button button--primary" onClick={() => setPoolModalOpen(true)}>配置当前将池</button><button className="button button--ghost" onClick={() => setPage('heroes')}>查询全部武将</button><div className="sidebar-meta">当前将池：{activePool?.name}<br />已选武将：{poolHeroIds.length} / {heroes.length}</div></aside><div className="tool-grid"><div className="section-heading"><div><span className="eyebrow">EIGHT HERO TOOLS</span><h2>选择技能工具</h2></div></div><div className="hero-grid">{toolHeroes.map((hero) => <button className="tool-card" key={hero.id} onClick={() => { resetTool(); setDrawHeroId(hero.id); setPage('draw') }}><span className="hero-faction">{hero.faction}</span><strong>{hero.name}</strong><span>{skills.find((skill) => hero.skillIds.includes(skill.id))?.name}</span><small>进入工具 →</small></button>)}</div></div></section>}
+    {page === 'home' && <section className="tool-home"><aside className="tool-sidebar"><span className="eyebrow">OFFLINE TOOLKIT</span><h1>一将成名</h1><p>选择一名武将，开始对应的线下技能辅助。</p><button className="button button--primary" onClick={() => setPoolModalOpen(true)}>配置当前将池</button><button className="button button--ghost" onClick={() => setPage('heroes')}>查询全部武将</button><div className="sidebar-meta">当前将池：{activePool?.name}<br />已选武将：{poolHeroIds.length} / {heroes.length}</div></aside><div className="tool-grid"><div className="section-heading"><div><span className="eyebrow">EIGHT HERO TOOLS</span><h2>选择技能工具</h2></div></div><div className="hero-grid">{toolHeroes.map((hero) => <button className="tool-card" key={hero.id} onClick={() => { recordToolUse(hero.id); resetTool(); setDrawHeroId(hero.id); setPage('draw') }}><span className="hero-faction">{hero.faction}</span><strong>{hero.name}</strong><span>{skills.find((skill) => hero.skillIds.includes(skill.id))?.name}</span><small>进入工具 →</small></button>)}</div></div></section>}
     {page === 'heroes' && <section className="content-section"><div className="section-heading"><h2>武将查询</h2><span className="count">{filteredHeroes.length} / {heroes.length}</span></div><div className="filters"><input value={query} onChange={(event) => { setHeroPage(1); setQuery(event.target.value) }} placeholder="搜索武将或技能" /></div><div className="hero-grid">{pagedHeroes.map((hero) => <HeroCard key={hero.id} hero={hero} onOpen={() => setPage('heroes')} />)}</div><div className="pagination"><button disabled={heroPage === 1} onClick={() => setHeroPage((current) => current - 1)}>Prev</button><span>{heroPage} / {heroPageCount}</span><button disabled={heroPage >= heroPageCount} onClick={() => setHeroPage((current) => current + 1)}>Next</button></div></section>}
     {page === 'draw' && <section className="content-section"><div className="section-heading"><h2>{drawHero?.name} · 技能工具</h2></div><div className="draw-panel">{usesPool && <div className="pool-switcher"><label>当前将池<select value={activePool?.id} onChange={(event) => selectPool(event.target.value)}>{pools.map((poolItem) => <option key={poolItem.id} value={poolItem.id}>{poolItem.name}</option>)}</select></label><button className="button button--ghost" onClick={() => setPoolModalOpen(true)}>配置将池 · {poolHeroIds.length}/{heroes.length}</button></div>}<div className="draw-controls">{drawHero?.name === LE_CAIYONG && <label>牌名字数<select value={caiYongLength} onChange={(event) => setCaiYongLength(event.target.value)}><option value="1">1字</option><option value="2">2字</option><option value="3">3字</option><option value="4">4字</option><option value="5">5字</option></select></label>}{drawHero?.name === CAOHUA && <label>彩翼状态<select value={caoHuaMode} onChange={(event) => setCaoHuaMode(event.target.value as CaoHuaMode)}><option value="阳">阳</option><option value="阴">阴</option></select></label>}{drawHero?.name === CAOHUA && <div className="cao-hua-options"><span>已移除选项：（未勾选表示移除）</span>{caoHuaTrackOptions.map((option) => <label key={option}><input type="checkbox" checked={caoHuaRemoved[caoHuaMode].includes(option)} onChange={() => toggleCaoHuaRemoved(option)} />{option}</label>)}</div>}{drawHero?.name === XUSHAO && <label>发动时机<select value={trigger} onChange={(event) => setTrigger(event.target.value as SkillTrigger)}><option value="play-phase">出牌阶段</option><option value="end-phase">结束阶段</option><option value="damaged">受到伤害后</option></select></label>}{drawHero?.name === ZHANGYU && <><label>目标势力<select value={targetFaction} onChange={(event) => setTargetFaction(event.target.value)}><option>魏</option><option>蜀</option><option>吴</option><option>群</option><option>神</option></select></label><label>初始体力<select value={targetHp} onChange={(event) => setTargetHp(event.target.value)}><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label></>}{drawHero?.name === SHEN_HUATUO && <label>搜索目标武将<input value={targetSearch} onChange={(event) => setTargetSearch(event.target.value)} placeholder="输入名称缩小范围" /><select value={targetHeroId} onChange={(event) => setTargetHeroId(event.target.value)}><option value="">请选择</option>{targetOptions.map((hero) => <option key={hero.id} value={hero.id}>{hero.name} · {hero.faction}{hero.hp}</option>)}</select></label>}{drawHero?.name === GUAN_NING && <label>技能归属座位<select value={activeSeat} onChange={(event) => setActiveSeat(event.target.value)}>{seatNames.map((seat) => <option key={seat}>{seat}</option>)}</select></label>}<button className="button button--primary" onClick={draw}>随机出现候选</button><button className="button button--ghost" onClick={resetTool}>重置本工具</button></div>{drawHero?.name === GUAN_NING && <div className="draw-notice">管宁本次抽到的技能将交给所选座位。座位名称：{seatNames.map((seat, index) => <input key={seat} value={seat} onChange={(event) => setSeatNames((current) => current.map((name, i) => i === index ? event.target.value : name))} />)}</div>}{candidates.length > 0 && <div className="candidate-grid">{candidates.map((item) => <button className="candidate-card" key={`${item.heroId}-${item.skillName}`} onClick={() => choose(item)}><strong>{item.heroName}</strong><span>{item.skillName}</span><small>{item.description}</small></button>)}</div>}{drawHero?.name === GUAN_NING && <div className="used-skills">{seatNames.map((seat) => <span key={seat}><strong>{seat}</strong>：{(seatSkills[seat] ?? []).join('、') || '暂无技能'}</span>)}</div>}{drawHero?.name === XUSHAO && usedSkillNames.length > 0 && <div className="used-skills"><span>许劭本局已发动：</span>{usedSkillNames.map((name) => <span className="tag" key={name}>{name}</span>)}<button onClick={() => setUsedSkillNames([])}>重置本局</button></div>}</div></section>}
   </main>{modal}<footer><span>数据来源：三国杀官方武将网站</span></footer></div>
