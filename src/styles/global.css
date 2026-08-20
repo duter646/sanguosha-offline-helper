@@ -67,4 +67,6 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
   .pagination button:disabled { cursor: not-allowed; opacity: .45; }
   .pool-search { margin-top: 18px; }
   .pool-search input { width: 100%; box-sizing: border-box; padding: 11px 14px; border: 1px solid #cfc2b1; background: #fffaf1; outline: none; }
+  .cao-hua-options { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: #75695c; font-size: 12px; }
+  .cao-hua-options label { display: inline-flex; align-items: center; gap: 4px; }
   .candidate-card:disabled { cursor: not-allowed; opacity: .5; }
