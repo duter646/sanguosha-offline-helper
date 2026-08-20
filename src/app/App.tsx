@@ -8,6 +8,7 @@ import { loadActivePoolId, loadPools, saveActivePoolId, savePools } from '../sto
 
 const names = ['许劭', '张裕', '神华佗', '关宁', '管宁', '赵襄', '全惠解', '南华老仙', '左慈', '神曹丕', '徐荣', '曹华', '李傕', '杨彪', '谋曹爽', '武关羽', '乐曹植', '神典韦', '神张角', '赵嫣', '乐蔡邕']
 const XUSHAO = '许劭'
+const NAN_HUA = '\u5357\u534e\u8001\u4ed9'
 const HERO_PAGE_SIZE = 24
 const POOL_PAGE_SIZE = 30
 const poolIndependentNames = new Set(['徐荣', '曹华', '李傕', '杨彪', '谋曹爽', '武关羽', '乐曹植', '神张角', '赵嫣', '乐蔡邕'])
@@ -28,6 +29,21 @@ const WU_GUAN_YU = '武关羽'
 const LE_CAO_ZHI = '乐曹植'
 const SHEN_DIANWEI = '神典韦'
 const SHEN_ZHANGJIAO = '神张角'
+const shenZhangJiaoCards = [
+  [1, '无懈可击', '桃园结义', '万箭齐发', '朱雀羽扇', '诸葛连弩', '决斗', '古锭刀', '闪电', '决斗', '白银狮子', '诸葛连弩', '决斗'],
+  [2, '火攻', '闪', '闪', '桃', '闪', '闪', '藤甲', '八卦阵', '雌雄双股剑', '寒冰箭', '藤甲', '八卦阵'],
+  [3, '火攻', '桃', '五谷丰登', '火杀', '闪', '顺手牵羊', '酒', '过河拆桥', '顺手牵羊', '酒', '杀', '杀'],
+  [4, '火杀', '桃', '五谷丰登', '火杀', '闪', '顺手牵羊', '雷杀', '过河拆桥', '顺手牵羊', '兵粮寸断', '过河拆桥', '杀'],
+  [5, '桃', '麒麟弓', '赤兔-1', '火杀', '闪', '贯石斧', '雷杀', '青龙偃月刀', '绝影+1', '雷杀', '的卢+1', '杀'],
+  [6, '桃', '桃', '乐不思蜀', '闪', '闪', '杀', '雷杀', '乐不思蜀', '青釭剑', '雷杀', '乐不思蜀', '青龙偃月刀'],
+  [7, '火杀', '桃', '无中生有', '闪', '闪', '杀', '雷杀', '南蛮入侵', '杀', '雷杀', '南蛮入侵', '杀'],
+  [8, '闪', '桃', '无中生有', '闪', '闪', '杀', '雷杀', '杀', '杀', '雷杀', '杀', '杀'],
+  [9, '闪', '桃', '无中生有', '闪', '酒', '闪', '酒', '杀', '杀', '酒', '杀', '杀'],
+  [10, '火杀', '杀', '杀', '闪', '闪', '杀', '兵粮寸断', '杀', '杀', '铁索连环', '杀', '杀'],
+  [11, '闪', '杀', '无中生有', '闪', '闪', '闪', '铁索连环', '无懈可击', '顺手牵羊', '铁索连环', '杀', '杀'],
+  [12, '闪', '杀', '过河拆桥', '闪', '火攻', '桃', '无懈可击', '方天画戟', '铁索连环', '铁索连环', '借刀杀人', '无懈可击'],
+  [13, '无懈可击', '八卦阵', '闪', '麒麟弓', '杀', '闪', '无懈可击', '大宛-1', '南蛮入侵', '铁索连环', '借刀杀人', '无懈可击'],
+].flatMap(([point, ...names]) => names.map((name) => ({ point: point as number, name: name as string })))
 const ZHAO_YAN = '赵嫣'
 const LE_CAIYONG = '乐蔡邕'
 const nonEquipmentNames = ['杀', '闪', '桃', '酒', '过河拆桥', '顺手牵羊', '无中生有', '无懈可击', '决斗', '南蛮入侵', '万箭齐发', '桃园结义', '五谷丰登', '借刀杀人', '乐不思蜀', '兵粮寸断', '火攻', '铁索连环']
@@ -231,6 +247,32 @@ export function App() {
             button.addEventListener('click', () => button.classList.toggle('candidate-card--detail-open'))
             button.dataset.detailBound = 'true'
           }
+          if (!button.querySelector('.candidate-detail-toggle')) {
+            const detailToggle = document.createElement('span')
+            detailToggle.className = 'candidate-detail-toggle'
+            detailToggle.textContent = '\u67e5\u770b\u6280\u80fd'
+            detailToggle.addEventListener('click', (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              button.classList.toggle('candidate-card--detail-open')
+            }, true)
+            button.append(detailToggle)
+          }
+        }
+        button.querySelector('.candidate-detail-toggle')?.remove()
+        if (summary && candidate?.description && !hasNoSkill) {
+          summary.textContent = button.classList.contains('candidate-card--detail-open') ? detail : '\u70b9\u51fb\u67e5\u770b\u6280\u80fd\u8be6\u60c5'
+          summary.classList.add('candidate-detail-summary')
+          summary.dataset.fullDetail = detail
+          if (!summary.dataset.detailSummaryBound) {
+            summary.addEventListener('click', (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              button.classList.toggle('candidate-card--detail-open')
+              summary.textContent = button.classList.contains('candidate-card--detail-open') ? summary.dataset.fullDetail ?? '' : '\u70b9\u51fb\u67e5\u770b\u6280\u80fd\u8be6\u60c5'
+            }, true)
+            summary.dataset.detailSummaryBound = 'true'
+          }
         }
         button.disabled = selectedGeneralIds.filter(Boolean).length >= 2 && !selected
         button.dataset.selected = String(selected)
@@ -262,6 +304,18 @@ export function App() {
       return slots
     })
   }, [drawHero?.name, selectedGeneralIds])
+  useEffect(() => {
+    if (drawHero?.name !== SHEN_DIANWEI) return
+    setCandidates((current) => {
+      let changed = false
+      const cleaned = current.map((item) => {
+        const description = item.description.replace(/^(?:\u5df2\u9009\u62e9[\uFF1A:]\s*)+/, '')
+        if (description !== item.description) changed = true
+        return description === item.description ? item : { ...item, description }
+      })
+      return changed ? cleaned : current
+    })
+  }, [drawHero?.name, candidates])
 
   const updatePools = (next: SkillPool[]) => { setPools(next); savePools(next) }
   const updatePoolHeroes = (ids: string[]) => updatePools(pools.map((poolItem) => poolItem.id === activePool?.id ? { ...poolItem, heroIds: ids } : poolItem))
@@ -287,7 +341,7 @@ export function App() {
     if (drawHero.name === WU_GUAN_YU) result = nonEquipmentNames.sort(() => Math.random() - .5).slice(0, 5).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机出现的非装备牌名' }))
     if (drawHero.name === LE_CAO_ZHI) { const name = nonEquipmentNames[Math.floor(Math.random() * nonEquipmentNames.length)]; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '赋随机获得的非装备牌名' }] }
     if (drawHero.name === SHEN_DIANWEI) result = pool.sort(() => Math.random() - .5).slice(0, 5).map((hero) => ({ heroId: hero.id, heroName: hero.name, skillName: '武将牌候选', description: `势力：${hero.faction}；体力：${hero.hp}；技能：${skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name).join('、') || '官网暂无技能'}` }))
-    if (drawHero.name === SHEN_ZHANGJIAO) { const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; const a = values[Math.floor(Math.random() * values.length)]; const b = values[Math.floor(Math.random() * values.length)]; const c = 36 - a - b; result = c >= 1 && c <= 13 ? [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '点数和36的随机牌组', description: `随机组合：${a}点、${b}点、${c}点` }] : [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '点数和36的随机牌组', description: '请重新抽取一组点数和为36的牌' }] }
+    if (drawHero.name === SHEN_ZHANGJIAO) { const combinations: Array<typeof shenZhangJiaoCards> = []; for (let first = 0; first < shenZhangJiaoCards.length - 2; first += 1) for (let second = first + 1; second < shenZhangJiaoCards.length - 1; second += 1) for (let third = second + 1; third < shenZhangJiaoCards.length; third += 1) if (shenZhangJiaoCards[first].point + shenZhangJiaoCards[second].point + shenZhangJiaoCards[third].point === 36) combinations.push([shenZhangJiaoCards[first], shenZhangJiaoCards[second], shenZhangJiaoCards[third]]); const picked = combinations[Math.floor(Math.random() * combinations.length)]; result = picked ? [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '肆军：点数和36', description: `随机获得：${picked.map((card) => `${card.point}点·${card.name}`).join('、')}` }] : [] }
     if (drawHero.name === ZHAO_YAN) { const nonDamage = nonEquipmentNames.filter((name) => !['杀', '决斗', '南蛮入侵', '万箭齐发', '火攻'].includes(name)); result = nonDamage.sort(() => Math.random() - .5).slice(0, 3).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机亮出的非伤害牌名' })) }
     if (drawHero.name === LE_CAIYONG) { const eligible = nonEquipmentNames.filter((name) => name.length === 2); result = eligible.sort(() => Math.random() - .5).slice(0, 2).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '符合当前字数条件的随机牌名' })) }
     if (drawHero.name === SHEN_DIANWEI) {
@@ -338,7 +392,11 @@ export function App() {
     if (drawHero.name === SHEN_DIANWEI) {
       result = result.map((item) => item.description ? item : { ...item, description: '\u6ca1\u6709\u7b26\u5408\u6761\u4ef6\u7684\u6280\u80fd' })
     }
-    setCandidates(result.filter((item) => !usedSkillNames.includes(item.skillName)))
+    if (drawHero.name === NAN_HUA) {
+      const bookSkills = ['\u96f7\u51fb', '\u95ed\u6708', '\u7a81\u88ad', '\u660e\u7b56', '\u76f4\u8a00', '\u9634\u5175', '\u6d3b\u6c14', '\u9b3c\u52a9', '\u4ed9\u6388', '\u8bba\u9053', '\u89c2\u6708', '\u8a00\u653f']
+      result = bookSkills.sort(() => Math.random() - .5).slice(0, 4).map((skillName) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName, description: '\u5199\u6ee1\u6280\u80fd\u7684\u5929\u4e66\uff1a\u968f\u673a\u62bd\u53d6' }))
+    }
+    setCandidates(drawHero.name === NAN_HUA ? result : result.filter((item) => !usedSkillNames.includes(item.skillName)))
   }
   const choose = (item: SkillCandidate) => {
     if (drawHero?.name === GUAN_NING) { setSeatSkills((current) => ({ ...current, [activeSeat]: [...(current[activeSeat] ?? []), item.skillName] })); setCandidates([]); return }

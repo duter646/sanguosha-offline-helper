@@ -55,6 +55,12 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
   .candidate-card--has-detail:after { content: attr(data-detail); position: absolute; z-index: 5; left: 0; right: 0; bottom: calc(100% + 8px); display: none; max-height: 260px; overflow: auto; padding: 12px 14px; white-space: pre-line; color: #51463c; background: #fffaf1; border: 1px solid #bca18d; box-shadow: 0 10px 24px rgba(47,35,26,.18); font-size: 12px; line-height: 1.7; pointer-events: none; }
   .candidate-card--has-detail:hover:after, .candidate-card--detail-open:after { display: block; }
   .candidate-card--has-detail > small { display: none; }
+  .candidate-card--has-detail:after { display: none !important; }
+  .candidate-card--has-detail.candidate-card--detail-open > small { display: block; margin-top: 4px; padding-top: 10px; border-top: 1px solid #dfcbb9; white-space: pre-line; }
+  .candidate-card--has-detail > small.candidate-detail-summary { display: block; margin-top: auto; padding: 8px 10px; border-top: 1px solid #dfcbb9; color: #8d3229; background: #f7eadf; cursor: pointer; white-space: pre-line; }
+  .candidate-card--has-detail.candidate-card--detail-open > small.candidate-detail-summary { margin-top: 4px; text-align: left; color: #51463c; background: transparent; }
+  .candidate-detail-toggle { align-self: flex-start; padding: 5px 9px; border: 1px solid #c9aa96; color: #8d3229; background: #f7eadf; font-size: 12px; cursor: pointer; }
+  .candidate-detail-toggle:hover { background: #eadbd0; }
   .candidate-card--selected { border: 2px solid #8d3229; background: #f1e1d6; }
   .pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 26px; color: #806b54; font-size: 13px; }
   .pagination button { padding: 8px 14px; border: 1px solid #cdb9a6; background: #fffaf1; color: #8d3229; }
