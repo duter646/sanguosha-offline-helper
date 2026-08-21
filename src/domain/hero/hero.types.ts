@@ -14,4 +14,4 @@ export type Hero = {
   availability: 'physical' | 'online-original' | 'limited-online' | 'unclassified'
 }
 
-export type Page = 'home' | 'heroes' | 'draw'
+export type Page = 'home' | 'heroes' | 'pool' | 'draw'
