@@ -29,7 +29,8 @@ const WU_GUAN_YU = '武关羽'
 const LE_CAO_ZHI = '乐曹植'
 const SHEN_DIANWEI = '神典韦'
 const SHEN_ZHANGJIAO = '神张角'
-type DeckCard = { point: number; name: string; suit?: '♥' | '♦' | '♠' | '♣' }
+type Suit = '♥' | '♦' | '♠' | '♣'
+type DeckCard = { point: number; name: string; suit: Suit }
 
 const shenZhangJiaoCards: DeckCard[] = [
   [1, '无懈可击', '桃园结义', '万箭齐发', '朱雀羽扇', '诸葛连弩', '决斗', '古锭刀', '闪电', '决斗', '白银狮子', '诸葛连弩', '决斗'],
@@ -43,9 +44,17 @@ const shenZhangJiaoCards: DeckCard[] = [
   [9, '闪', '桃', '无中生有', '闪', '酒', '闪', '酒', '杀', '杀', '酒', '杀', '杀'],
   [10, '火杀', '杀', '杀', '闪', '闪', '杀', '兵粮寸断', '杀', '杀', '铁索连环', '杀', '杀'],
   [11, '闪', '杀', '无中生有', '闪', '闪', '闪', '铁索连环', '无懈可击', '顺手牵羊', '铁索连环', '杀', '杀'],
-  [12, '闪', '桃', '过河拆桥', '闪电', '火攻', '桃', '无懈可击', '方天画戟', '铁索连环', '铁索连环', '借刀杀人', '无懈可击'],
+  [12, '闪', '桃', '过河拆桥', '闪电', '火攻', '桃', '无懈可击', '方天画戟', '铁索连环', '丈八蛇矛', '过河拆桥', '铁索连环', '借刀杀人', '无懈可击'],
   [13, '无懈可击', '爪黄飞电+1', '闪', '闪', '骅骝+1', '杀', '无懈可击', '大宛-1', '南蛮入侵', '铁索连环', '借刀杀人', '无懈可击'],
-].flatMap<DeckCard>(([point, ...names]) => names.map((name) => ({ point: point as number, name: name as string }))).concat({ point: 5, suit: '♦', name: '木牛流马' })
+].flatMap<DeckCard>(([point, ...names]) => {
+  const suits: Suit[] = point === 2
+    ? ['♥', '♥', '♥', '♦', '♦', '♦', '♠', '♠', '♠', '♣', '♣', '♣', '♣']
+    : point === 12
+      ? ['♥', '♥', '♥', '♦', '♦', '♦', '♦', '♠', '♠', '♠', '♠', '♣', '♣', '♣']
+      : ['♥', '♥', '♥', '♦', '♦', '♦', '♠', '♠', '♠', '♣', '♣', '♣']
+  return names.map((name, index) => ({ point: point as number, name: name as string, suit: suits[index] }))
+}).concat({ point: 5, suit: '♦', name: '木牛流马' })
+const formatDeckCard = (card: DeckCard) => `${card.suit}${card.point} · ${card.name}`
 const pickCardsWithPointTotal = (cards: DeckCard[], total: number) => {
   const shuffled = [...cards].sort(() => Math.random() - .5)
   const maxCount = Math.min(shuffled.length, total)
@@ -429,9 +438,9 @@ export function App() {
     if (drawHero.name === WU_GUAN_YU) result = nonEquipmentNames.sort(() => Math.random() - .5).slice(0, 5).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机出现的非装备牌名' }))
     if (drawHero.name === LE_CAO_ZHI) { const name = nonEquipmentNames[Math.floor(Math.random() * nonEquipmentNames.length)]; result = [{ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '赋随机获得的非装备牌名' }] }
     if (drawHero.name === SHEN_DIANWEI) result = pool.sort(() => Math.random() - .5).slice(0, 5).map((hero) => ({ heroId: hero.id, heroName: hero.name, skillName: '武将牌候选', description: `势力：${hero.faction}；体力：${hero.hp}；技能：${skills.filter((skill) => hero.skillIds.includes(skill.id)).map((skill) => skill.name).join('、') || '官网暂无技能'}` }))
-    if (drawHero.name === SHEN_ZHANGJIAO) { const picked = pickCardsWithPointTotal(shenZhangJiaoCards, 36); result = picked.length ? [{ heroId: drawHero.id, heroName: drawHero.name, skillName: '肆军：点数和36', description: `随机获得${picked.length}张牌：${picked.map((card) => `${card.suit ?? ''}${card.point}点·${card.name}`).join('、')}` }] : [] }
+    if (drawHero.name === SHEN_ZHANGJIAO) { const picked = pickCardsWithPointTotal(shenZhangJiaoCards, 36); result = picked.length ? [{ heroId: drawHero.id, heroName: drawHero.name, skillName: `肆军：${picked.length}张牌，点数和36`, description: picked.map(formatDeckCard).join('\n') }] : [] }
     if (drawHero.name === ZHAO_YAN) { const singleTargetNonDamageCards = ['桃', '顺手牵羊', '过河拆桥', '借刀杀人', '乐不思蜀', '兵粮寸断']; result = singleTargetNonDamageCards.sort(() => Math.random() - .5).slice(0, 3).map((name) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: name, description: '随机亮出的不同名、单一目标非伤害牌；目标角色选择其中一张使用，其余两张由你依次使用' })) }
-    if (drawHero.name === LE_CAIYONG) { const length = Number(caiYongLength); const eligible = shenZhangJiaoCards.filter((card) => getCardNameLength(card.name) === length); result = eligible.sort(() => Math.random() - .5).slice(0, 2).map((card) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: `${card.suit ?? ''}${card.point}点·${card.name}`, description: `符合${length}字牌条件的随机牌（包含装备牌）` })) }
+    if (drawHero.name === LE_CAIYONG) { const length = Number(caiYongLength); const eligible = shenZhangJiaoCards.filter((card) => getCardNameLength(card.name) === length); result = eligible.sort(() => Math.random() - .5).slice(0, 2).map((card) => ({ heroId: drawHero.id, heroName: drawHero.name, skillName: formatDeckCard(card), description: `符合${length}字牌条件的随机牌（包含装备牌）` })) }
     if (drawHero.name === SHEN_DIANWEI) {
       const allowedSkills = (hero: Hero) => skills.filter((skill) => hero.skillIds.includes(skill.id)).filter((skill) => {
         const description = skill.description

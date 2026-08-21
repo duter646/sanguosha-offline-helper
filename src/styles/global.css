@@ -133,6 +133,11 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
   .cao-hua-options { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: #75695c; font-size: 12px; }
   .cao-hua-options label { display: inline-flex; align-items: center; gap: 4px; }
   .candidate-card:disabled { cursor: not-allowed; opacity: .5; }
+  .candidate-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .candidate-card { min-height: 0; padding: 20px; gap: 10px; border-color: #cdb9a6; box-shadow: 0 2px 8px rgba(73, 50, 31, .06); }
+  .candidate-card > strong { font-size: 14px; letter-spacing: .08em; }
+  .candidate-card > span { color: #332a24; font-size: 19px; line-height: 1.35; }
+  .candidate-card > small { margin-top: auto; padding: 12px 14px; color: #51463c; background: #f7eadf; border-left: 3px solid #a64435; font-size: 14px; line-height: 2; }
   @media (max-width: 760px) {
     .pagination { gap: 10px; }
   }
