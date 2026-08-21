@@ -27,17 +27,20 @@ main { width: min(1120px, 86vw); margin: 0 auto; flex: 1; }
 .pool-switcher { display: flex; align-items: end; gap: 12px; margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #e0d4c4; } .pool-switcher label { display: flex; flex-direction: column; gap: 7px; color: #75695c; font-size: 12px; } .pool-switcher select { min-width: 240px; padding: 11px; border: 1px solid #cfc2b1; background: #f8f5ed; }
 footer { display: flex; justify-content: space-between; padding: 22px 7vw; color: #9b8b78; border-top: 1px solid #d7cdbd; font: 11px sans-serif; }
 @media (max-width: 760px) { .topbar { height: auto; padding: 16px 7vw; align-items: flex-start; gap: 10px; flex-direction: column; } nav { width: 100%; justify-content: space-between; gap: 10px; } nav button { padding: 5px 0; } .hero-banner { margin-top: 20px; min-height: 540px; padding: 48px 11vw; align-items: flex-start; } .seal { position: absolute; right: 10%; bottom: 55px; width: 92px; height: 92px; font-size: 21px; } .hero-grid, .candidate-grid, .pool-list { grid-template-columns: 1fr; } .detail-card { padding: 28px 22px; } footer { gap: 8px; flex-direction: column; } }
- .tool-home { display: grid; grid-template-columns: 250px 1fr; gap: 34px; padding: 44px 0; }
- .tool-sidebar { position: sticky; top: 105px; align-self: start; padding: 26px; border: 1px solid #d5c8b7; background: rgba(250,247,239,.78); }
- .tool-sidebar h1 { font-size: 36px; margin: 12px 0; }
- .tool-sidebar p { color: #75695c; line-height: 1.8; }
- .tool-sidebar .button { width: 100%; margin-top: 10px; }
- .sidebar-meta { margin-top: 28px; padding-top: 18px; border-top: 1px solid #e0d4c4; color: #8a7968; font-size: 12px; line-height: 2; }
- .tool-grid .section-heading { margin-bottom: 22px; }
- .tool-card { min-height: 170px; padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; text-align: left; border: 1px solid #d5c8b7; background: #fbf8f0; color: #332a24; cursor: pointer; }
+ .tool-home { padding: 32px 0 48px; }
+ .tool-home__header { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding-bottom: 22px; border-bottom: 1px solid #d7cdbd; }
+ .tool-home__intro h1 { margin: 8px 0 4px; font-size: 34px; letter-spacing: -2px; }
+ .tool-home__intro p { margin: 0; color: #75695c; }
+ .tool-home__pool { display: flex; align-items: center; justify-content: flex-end; gap: 16px; color: #8a7968; font-size: 12px; }
+ .tool-home__pool strong { color: #55483d; }
+ .tool-home__pool .button { white-space: nowrap; }
+ .tool-grid__meta { margin: 18px 0 12px; color: #9b8975; font-size: 12px; }
+ .tool-grid .hero-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+ .tool-card { min-width: 0; min-height: 138px; padding: 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; border: 1px solid #d5c8b7; background: #fbf8f0; color: #332a24; cursor: pointer; }
  .tool-card:hover { border-color: #8d3229; transform: translateY(-2px); }
- .tool-card strong { font-size: 23px; color: #8d3229; }
+ .tool-card strong { font-size: 21px; color: #8d3229; }
  .tool-card small { margin-top: auto; color: #9b8975; }
+ @media (max-width: 980px) { .tool-grid .hero-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
  .pool-modal__backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 28px; overflow-y: auto; background: rgba(47,35,26,.48); }
  .pool-modal__backdrop > .detail-card { width: min(760px, 94vw); max-height: calc(100vh - 56px); overflow-y: auto; }
 .pool-modal { width: min(980px, 94vw); max-height: 86vh; overflow: auto; padding: 24px; border: 1px solid #cdbfab; background: #f8f5ed; box-shadow: 0 24px 70px rgba(47,35,26,.25); }
@@ -49,6 +52,8 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
 .pool-manager__row button { padding: 8px 11px; border: 1px solid #c9b9a7; color: #6e332b; background: #fffaf1; cursor: pointer; }
 .pool-manager__row button:hover:not(:disabled) { border-color: #8d3229; background: #f5e6dc; }
 .pool-manager__row button:disabled { cursor: not-allowed; opacity: .45; }
+.pool-manager__row input { flex: 1 1 180px; min-width: 160px; padding: 9px 10px; border: 1px solid #cfc2b1; background: #fffaf1; color: #51463c; }
+.pool-manager__message { display: block; margin-top: 9px; color: #a04435; font-size: 12px; }
 .pool-config__header small { display: block; margin-top: 7px; color: #8a7968; font-size: 12px; }
  .app-back-button { position: fixed; left: 18px; bottom: 18px; z-index: 20; padding: 10px 16px; border: 1px solid #a64435; border-radius: 4px; color: #fff8ee; background: #8d3229; box-shadow: 0 5px 18px rgba(47,35,26,.2); }
   @media (max-width: 760px) {
@@ -59,9 +64,12 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
     main { width: min(1120px, calc(100% - 28px)); }
     h2 { font-size: 28px; }
     .content-section { padding: 34px 0; }
-    .tool-home { min-width: 0; grid-template-columns: 1fr; gap: 30px; padding-top: 24px; }
-    .tool-sidebar, .tool-grid { min-width: 0; }
-    .tool-sidebar { position: static; padding: 22px; }
+    .tool-home { min-width: 0; padding: 24px 0 36px; }
+    .tool-home__header { align-items: stretch; flex-direction: column; gap: 16px; padding-bottom: 18px; }
+    .tool-home__intro h1 { font-size: 30px; }
+    .tool-home__pool { align-items: stretch; justify-content: space-between; }
+    .tool-home__pool span { align-self: center; }
+    .tool-grid { min-width: 0; }
     .tool-grid .hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .tool-card { min-width: 0; padding: 18px; }
     .tool-card strong, .tool-card span, .tool-card small { max-width: 100%; overflow-wrap: anywhere; }
@@ -86,7 +94,9 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
   }
   @media (max-width: 520px) {
     .tool-grid .hero-grid { grid-template-columns: 1fr; }
-    .tool-card { min-height: 142px; }
+    .tool-card { min-height: 124px; }
+    .tool-home__pool { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .tool-home__pool span { min-width: 0; }
     .section-heading { align-items: flex-start; gap: 12px; }
   }
   .visual-selection-board { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 22px 0 14px; padding: 14px 16px; border: 1px solid #d4b9a8; background: #f1e8d8; color: #806b54; }
