@@ -94,7 +94,11 @@ footer { display: flex; justify-content: space-between; padding: 22px 7vw; color
   }
   @media (max-width: 520px) {
     .tool-grid .hero-grid { grid-template-columns: 1fr; }
-    .tool-card { min-height: 124px; }
+    .tool-card { min-height: 0; padding: 14px 16px; display: grid; grid-template-columns: 27px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 12px; row-gap: 3px; align-items: center; }
+    .tool-card .hero-faction { grid-row: 1 / 3; }
+    .tool-card strong { grid-column: 2; grid-row: 1; }
+    .tool-card > span:not(.hero-faction) { grid-column: 2; grid-row: 2; }
+    .tool-card small { grid-column: 3; grid-row: 1 / 3; margin-top: 0; white-space: nowrap; }
     .tool-home__pool { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .tool-home__pool span { min-width: 0; }
     .section-heading { align-items: flex-start; gap: 12px; }
